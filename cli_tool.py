@@ -26,7 +26,7 @@ DEFAULT_CONFIG = {
     "text_size": "normal",
     "word_limit": 150,
     "api_key": "",
-    "model": "gemini-pro"
+    "model": "gemini-2.0-flash"
 }
 
 # Color mapping
@@ -78,7 +78,7 @@ class CLIManager:
     
     def setup_ai(self):
         if not self.config["api_key"]:
-            print(f"{Fore.YELLOW}API key not found. Please set it using 'cm --settings'")
+            print(f"{Fore.YELLOW}API key not found. Please set it using 'cms'")
             return
         
         try:
@@ -114,7 +114,7 @@ class CLIManager:
         
         prompt = f"""
         This is a terminal command error with exit code {exit_code}. 
-        Please explain what this error means in simple terms and suggest a solution:
+        Please explain what this error means in simple terms and just show the main error and the perfect solution in less words:
         
         {cleaned_error}
         """
@@ -176,7 +176,7 @@ class CLIManager:
             # Test the API key
             try:
                 genai.configure(api_key=new_value)
-                test_model = genai.GenerativeModel("gemini-pro")
+                test_model = genai.GenerativeModel("gemini-2.0-flash")
                 test_response = test_model.generate_content("Say 'API key is working!'")
                 print(f"{Fore.GREEN}API key validated successfully!")
                 self.config[setting] = new_value
@@ -224,8 +224,8 @@ def create_parser():
     parser = argparse.ArgumentParser(description="CLI Manager Tool with AI assistance")
     parser.add_argument("-s", "--ask", help="Ask AI a question", nargs='+')
     parser.add_argument("-e", "--explain", help="Explain the last command error", action="store_true")
-    parser.add_argument("--settings", help="Update tool settings", action="store_true")
-    parser.add_argument("--full", help="Show full AI response without word limit", action="store_true")
+    parser.add_argument("cm -s", help="Update tool settings", action="store_true")
+    parser.add_argument("cmf", help="Show full AI response without word limit", action="store_true")
     parser.add_argument("-c", "--command", help="Run a command and explain any errors", nargs='+')
     return parser
 
