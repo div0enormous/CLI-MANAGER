@@ -34,6 +34,38 @@ fi
 PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo "[+] Python version $PYTHON_VERSION detected."
 
+# Check and install pip if needed
+echo "[+] Checking pip installation..."
+if ! command -v pip3 &> /dev/null; then
+    echo "[+] Installing pip..."
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get update && sudo apt-get install -y python3-pip
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y python3-pip
+    elif command -v brew &> /dev/null; then
+        brew install python3
+    else
+        echo "[-] Could not install pip automatically. Please install pip manually."
+        exit 1
+    fi
+fi
+
+# Check and install venv if needed
+echo "[+] Checking venv installation..."
+if ! python3 -c 'import ensurepip' &> /dev/null; then
+    echo "[+] Installing venv..."
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get update && sudo apt-get install -y python3-venv
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y python3-venv
+    elif command -v brew &> /dev/null; then
+        brew install python3
+    else
+        echo "[-] Could not install venv automatically. Please install venv manually."
+        exit 1
+    fi
+fi
+
 # Create installation directory
 echo "[+] Creating installation directories..."
 mkdir -p "$INSTALL_DIR"
@@ -41,26 +73,66 @@ mkdir -p "$BIN_DIR"
 
 # Create virtual environment
 echo "[+] Setting up virtual environment..."
-if ! command -v python3 -m venv &> /dev/null; then
-    echo "[+] Installing venv module..."
-    python3 -m pip install virtualenv
-fi
-
 python3 -m venv "$INSTALL_DIR/venv"
-source "$INSTALL_DIR/venv/bin/activate"
+
+# Make venv executable
+chmod +x "$INSTALL_DIR/venv/bin/activate"
+source "$INSTALL_DIR/venv/bin/activate" || {
+    echo "[-] Failed to activate virtual environment. Trying alternative method..."
+    export PYTHONPATH="$INSTALL_DIR/venv/lib/python$PYTHON_VERSION/site-packages:$PYTHONPATH"
+    export PATH="$INSTALL_DIR/venv/bin:$PATH"
+}
 
 # Create requirements.txt
 echo "[+] Creating requirements file..."
 cat > "$INSTALL_DIR/requirements.txt" << EOF
-colorama
-google-generativeai -q -U
-requests
+# Core dependencies
+pip>=22.0.0
+virtualenv>=20.0.0
+setuptools>=60.0.0
+wheel>=0.37.0
+
+# Tool dependencies
+colorama>=0.4.4
+google-generativeai>=0.3.0
+requests>=2.28.0
 EOF
 
 # Install requirements
 echo "[+] Installing required packages..."
 python3 -m pip install --upgrade pip &> /dev/null
 python3 -m pip install -r "$INSTALL_DIR/requirements.txt" &> /dev/null
+
+# Create shortcuts
+echo "[+] Creating shortcuts..."
+mkdir -p "$INSTALL_DIR/shortcuts"
+
+# Create shortcut for settings
+cat > "$INSTALL_DIR/shortcuts/cms" << EOF
+#!/bin/bash
+source "$INSTALL_DIR/venv/bin/activate"
+python3 "$INSTALL_DIR/cli_manager.py" --settings
+EOF
+chmod +x "$INSTALL_DIR/shortcuts/cms"
+ln -sf "$INSTALL_DIR/shortcuts/cms" "$BIN_DIR/cms"
+
+# Create shortcut for full responses
+cat > "$INSTALL_DIR/shortcuts/cmf" << EOF
+#!/bin/bash
+source "$INSTALL_DIR/venv/bin/activate"
+python3 "$INSTALL_DIR/cli_manager.py" -s "\$@" --full
+EOF
+chmod +x "$INSTALL_DIR/shortcuts/cmf"
+ln -sf "$INSTALL_DIR/shortcuts/cmf" "$BIN_DIR/cmf"
+
+# Create shortcut for command execution with error handling
+cat > "$INSTALL_DIR/shortcuts/cmr" << EOF
+#!/bin/bash
+source "$INSTALL_DIR/venv/bin/activate"
+python3 "$INSTALL_DIR/cli_manager.py" -c "\$@"
+EOF
+chmod +x "$INSTALL_DIR/shortcuts/cmr"
+ln -sf "$INSTALL_DIR/shortcuts/cmr" "$BIN_DIR/cmr"
 
 # Copy CLI Manager script
 echo "[+] Installing CLI Manager Tool..."
@@ -361,9 +433,9 @@ if [ -n "$SHELL_CONFIG" ]; then
         echo "export PATH=\"\$PATH:$BIN_DIR\"" >> "$SHELL_CONFIG"
         echo "# Show a reminder to set the API key if not set" >> "$SHELL_CONFIG"
         echo "if [ -f \"$INSTALL_DIR/venv/bin/activate\" ]; then" >> "$SHELL_CONFIG"
-        echo "    source \"$INSTALL_DIR/venv/bin/activate\" &>/dev/null" >> "$SHELL_CONFIG"
+        echo "    source \"$INSTALL_DIR/venv/bin/activate\" &>/dev/null || export PYTHONPATH=\"$INSTALL_DIR/venv/lib/python\$(python3 -c 'import sys; print(f\"{sys.version_info.major}.{sys.version_info.minor}\")')/site-packages:\$PYTHONPATH\"" >> "$SHELL_CONFIG"
         echo "    if ! python3 -c 'import os; exit(0 if os.path.exists(\"$INSTALL_DIR/config.json\") and \"api_key\" in open(\"$INSTALL_DIR/config.json\").read() and len(open(\"$INSTALL_DIR/config.json\").read().split(\"api_key\")[1].split(\":\")[1].split(\",\")[0].strip(\"\\\"\").strip()) > 10 else 1)' &>/dev/null; then" >> "$SHELL_CONFIG"
-        echo "        echo \"[CLI Manager] API key not set. Run 'cm --settings' to set it up.\"" >> "$SHELL_CONFIG"
+        echo "        echo \"[CLI Manager] API key not set. Run 'cms' to set it up.\"" >> "$SHELL_CONFIG"
         echo "    fi" >> "$SHELL_CONFIG"
         echo "    deactivate &>/dev/null" >> "$SHELL_CONFIG"
         echo "fi" >> "$SHELL_CONFIG"
@@ -463,8 +535,10 @@ echo ""
 echo "To use the tool:"
 echo "  - For help: cm --help"
 echo "  - To ask AI: cm -s \"your question here\""
-echo "  - To update settings: cm --settings"
+echo "  - To update settings: cms"
+echo "  - To get full AI response: cmf \"your question here\""
+echo "  - To run command with error handling: cmr \"your command\""
 echo ""
 echo "You may need to restart your terminal or run 'source $SHELL_CONFIG'"
-echo "to use the 'cm' command without specifying the full path."
+echo "to use the shortcuts without specifying the full path."
 echo ""
