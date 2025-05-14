@@ -13,7 +13,7 @@ echo '
  ║   ╚═════╝╚══════╝╚═╝    ╚═╝     ╚═╝ ╚═════╝   ║
  ║                                               ║
  ║         CLI Manager Tool Installer            ║
- ║                                               ║
+ ║          💚MADE BY DIBYENDU DEY               ║
  ╚═══════════════════════════════════════════════╝
 '
 
@@ -138,7 +138,7 @@ ln -sf "$INSTALL_DIR/shortcuts/cmr" "$BIN_DIR/cmr"
 echo "[+] Installing CLI Manager Tool..."
 cat > "$INSTALL_DIR/cli_manager.py" << 'EOF'
 #!/usr/bin/env python3
-# cli_manager.py - CLI Manager Tool with AI assistance
+# cli_tools.py - CLI Manager Tool with AI assistance
 
 import os
 import sys
