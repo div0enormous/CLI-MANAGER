@@ -34,13 +34,13 @@ CLI Manager is an intelligent terminal assistant that simplifies command-line op
 
 ```bash
 # Download the installer
-curl -O https://raw.githubusercontent.com/yourusername/cli-manager/main/install.sh
+curl -O https://github.com/div0enormous/CLI-MANAGER.git
 
 # Make it executable
-chmod +x install.sh
+chmod +x install_script.sh
 
 # Run the installer
-./install.sh
+./install_script.sh
 ```
 
 During installation, you'll be prompted to enter your Google Gemini API key. You can also set or update this later.
@@ -49,11 +49,11 @@ During installation, you'll be prompted to enter your Google Gemini API key. You
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/cli-manager.git
-cd cli-manager
+https://github.com/div0enormous/CLI-MANAGER.git
+cd CLI-MANAGER
 
 # Run the installer
-./install.sh
+./install_script.sh
 ```
 
 ## 🚀 Usage
@@ -237,4 +237,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by the need to simplify terminal experiences for developers
 
 
-         MADE BY DIBYENDU DEY WITH ♥️
+<p style="text-align:center,font-size:10px">MADE WITH ♥️ FOR POWER LINUX USER</p>
